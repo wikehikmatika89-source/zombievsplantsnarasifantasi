@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BUNGA MENEMBAK ZOMBIE - Game Edukasi Kelas 7</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background-color: #f0fdf4;
+            user-select: none;
+            overflow-x: hidden;
+        }
+        .font-game {
+            font-family: 'Fredoka One', cursive;
+        }
+        .lawn-grid {
+            display: grid;
+            grid-template-rows: repeat(5, 1fr);
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            background-color: #4ade80;
+            border: 4px solid #15803d;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2);
+        }
+        .lawn-cell {
+            background-color: #86efac;
+            position: relative;
+            transition: all 0.2s;
+        }
+        .lawn-cell:nth-child(even) {
+            background-color: #4ade80;
+        }
+        .lawn-cell:hover {
+            filter: brightness(1.1);
+            cursor: pointer;
+        }
+        /* Custom animations */
+        @keyframes sway {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        .animate-sway {
+            animation: sway 2s ease-in-out infinite;
+        }
+        @keyframes walk {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-4px) rotate(2deg); }
+        }
+        .animate-walk {
+            animation: walk 0.6s linear infinite;
+        }
+        @keyframes pulse-slow {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Top Classroom Banner -->
+    <header class="bg-emerald-600 text-white shadow-md p-3 px-6 flex justify-between items-center border-b-4 border-emerald-800">
+        <div class="flex items-center gap-3">
+            <div class="bg-amber-400 p-2 rounded-xl text-emerald-900 font-bold shadow">
+                <i class="fa-solid font-game text-xl">🌻</i>
+            </div>
+            <div>
+                <h1 class="font-game text-xl md:text-2xl tracking-wide text-yellow-300 drop-shadow">BUNGA MENEMBAK ZOMBIE</h1>
+                <p class="text-xs text-emerald-100 hidden sm:block">Kuiz Bahasa Indonesia Kelas 7: Teks Narasi Fantasi</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button id="audioToggleBtn" onclick="toggleAudio()" class="bg-emerald-700 hover:bg-emerald-800 text-white p-2 px-3 rounded-lg flex items-center gap-2 border border-emerald-500 shadow transition">
+                <i id="audioIcon" class="fas fa-volume-up"></i>
+                <span id="audioStatusText" class="text-xs font-semibold hidden md:inline">Musik: ON</span>
+            </button>
+            <div id="playerBadge" class="hidden bg-emerald-800/60 px-3 py-1 rounded-lg text-sm border border-emerald-500">
+                👤 <span id="displayStudentName" class="font-bold text-yellow-300">-</span> | <span id="displayClass">-</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Registration Screen (Identitas Siswa) -->
+    <div id="loginScreen" class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-6 md:p-8 max-w-md w-full border-4 border-emerald-400 relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-amber-200 rounded-full opacity-50 blur-xl"></div>
+            
+            <div class="text-center mb-6 relative">
+                <div class="inline-block p-4 bg-emerald-100 rounded-full mb-3 text-4xl shadow-inner border border-emerald-300">
+                    🌻🧟‍♂️
+                </div>
+                <h2 class="font-game text-2xl md:text-3xl text-emerald-700">Masuk Arena Kuis!</h2>
+                <p class="text-sm text-slate-500 mt-1">Isi identitas dirimu sebelum bertarung melawan Zombie Teks Fantasi!</p>
+            </div>
+
+            <form id="identityForm" onsubmit="startGame(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">Nama Lengkap Siswa</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-user"></i></span>
+                        <input type="text" id="inputName" required placeholder="Contoh: Budi Santoso" class="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-0 text-sm font-semibold outline-none transition">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">Nomor Absen</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-list-ol"></i></span>
+                            <input type="number" id="inputAbsen" min="1" max="50" required placeholder="15" class="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-0 text-sm font-semibold outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-800 uppercase mb-1">Kelas</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><i class="fas fa-school"></i></span>
+                            <select id="inputClass" required class="w-full pl-10 pr-4 py-2.5 rounded-xl border-2 border-emerald-200 focus:border-emerald-500 focus:ring-0 text-sm font-semibold outline-none transition bg-white">
+                                <option value="7-A">7-A</option>
+                                <option value="7-B">7-B</option>
+                                <option value="7-C">7-C</option>
+                                <option value="7-D">7-D</option>
+                                <option value="7-E">7-E</option>
+                                <option value="7-F">7-F</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-xs text-emerald-800 space-y-1">
+                    <p class="font-bold"><i class="fas fa-info-circle mr-1"></i> Aturan Permainan:</p>
+                    <ul class="list-disc list-inside space-y-0.5 text-slate-600">
+                        <li>Kalahkan 30 Zombie dengan tanamanmu.</li>
+                        <li>Jawab soal Teks Narasi Fantasi (+4 Poin/Soal).</li>
+                        <li>Waktu menjawab tiap soal: 30 detik (1 kali kesempatan).</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-amber-950 font-game text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition active:translate-y-0 border-b-4 border-amber-600 flex items-center justify-center gap-2">
+                    <i class="fas fa-play"></i> MULAI PERMAINAN
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden flex-grow flex flex-col p-2 md:p-4 max-w-6xl mx-auto w-full gap-3">
+        
+        <!-- Game HUD Controls Bar -->
+        <div class="bg-white/90 backdrop-blur rounded-2xl p-3 shadow-md border-2 border-emerald-300 flex flex-wrap justify-between items-center gap-2">
+            <!-- House Health Bar -->
+            <div class="flex items-center gap-2 bg-red-50 px-3 py-1.5 rounded-xl border border-red-200">
+                <i class="fas fa-home text-red-500 text-lg"></i>
+                <div class="flex flex-col">
+                    <span class="text-[10px] font-bold text-red-700 uppercase leading-none">Darah Rumah</span>
+                    <div id="houseHpHearts" class="flex gap-1 text-red-500 text-sm mt-0.5">
+                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sun Energy -->
+            <div class="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-300">
+                <span class="text-2xl animate-spin" style="animation-duration: 8s;">☀️</span>
+                <div>
+                    <span class="text-[10px] font-bold text-amber-800 uppercase leading-none">Energi MATAHARI</span>
+                    <div id="sunCounter" class="font-game text-xl text-amber-600 leading-none">150</div>
+                </div>
+            </div>
+
+            <!-- Score & Progress -->
+            <div class="flex items-center gap-4">
+                <div class="bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-300 text-center">
+                    <span class="text-[10px] font-bold text-emerald-800 uppercase block leading-none">Skor Saat Ini</span>
+                    <span id="scoreDisplay" class="font-game text-xl text-emerald-700 leading-none">0</span>
+                </div>
+                <div class="bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-300 text-center">
+                    <span class="text-[10px] font-bold text-blue-800 uppercase block leading-none">Zombie Tersisa</span>
+                    <span id="zombieRemainingDisplay" class="font-game text-xl text-blue-700 leading-none">30</span>
+                </div>
+            </div>
+
+            <!-- Plant Selector Cards -->
+            <div class="flex gap-2">
+                <button id="btnSelectPeashooter" onclick="selectPlantTool('peashooter')" class="plant-card relative bg-emerald-100 hover:bg-emerald-200 border-2 border-emerald-500 rounded-xl p-1.5 flex flex-col items-center w-16 transition shadow">
+                    <span class="text-xl">🌻</span>
+                    <span class="text-[10px] font-bold text-emerald-900">Penembak</span>
+                    <span class="text-[9px] bg-amber-400 px-1 rounded font-bold text-amber-950">100☀️</span>
+                </button>
+
+                <button id="btnSelectWallnut" onclick="selectPlantTool('wallnut')" class="plant-card relative bg-amber-100 hover:bg-amber-200 border-2 border-amber-600 rounded-xl p-1.5 flex flex-col items-center w-16 transition shadow">
+                    <span class="text-xl">🥔</span>
+                    <span class="text-[10px] font-bold text-amber-900">Benteng</span>
+                    <span class="text-[9px] bg-amber-400 px-1 rounded font-bold text-amber-950">50☀️</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Arena Layout -->
+        <div class="relative flex-grow flex rounded-2xl overflow-hidden shadow-2xl border-4 border-emerald-700 bg-emerald-800 min-h-[360px]">
+            
+            <!-- House Zone (Left Side Protection) -->
+            <div class="w-16 md:w-24 bg-amber-800/80 border-r-4 border-amber-950 flex flex-col justify-around items-center p-1 relative z-10">
+                <div class="text-3xl md:text-4xl filter drop-shadow">🏡</div>
+                <div class="text-2xl opacity-60">🌾</div>
+                <div class="text-3xl md:text-4xl filter drop-shadow">🏠</div>
+            </div>
+
+            <!-- Lawn Board Game Grid Area -->
+            <div id="lawnContainer" class="relative flex-grow lawn-grid p-1">
+                <!-- Lawn cells (5x9) dynamically generated by JS -->
+            </div>
+
+            <!-- Floating Overlay Canvas/Layer for Zombies & Projectiles -->
+            <div id="entityOverlay" class="absolute inset-0 pointer-events-none z-20 overflow-hidden">
+                <!-- Dynamic Zombies & Peas rendered here -->
+            </div>
+        </div>
+
+        <div class="bg-emerald-100/80 rounded-xl p-2 text-center text-xs text-emerald-800 font-semibold border border-emerald-300">
+            💡 <span class="text-emerald-900">Petunjuk Kelas:</span> Klik jenis tanaman di atas, lalu klik pada kotak rumput hijau untuk menanam! Tahan gelombang zombie dan jawab soalnya!
+        </div>
+    </div>
+
+    <!-- Quiz Question Modal Overlay -->
+    <div id="quizModal" class="hidden fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-3">
+        <div class="bg-white rounded-3xl shadow-2xl border-4 border-emerald-500 max-w-2xl w-full overflow-hidden animate-pulse-slow">
+            
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-emerald-600 to-teal-600 p-4 text-white flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="bg-amber-400 text-amber-950 font-game px-2.5 py-0.5 rounded-lg text-sm">TORTUR ZOMBIE</span>
+                    <h3 id="questionCategory" class="text-xs md:text-sm font-semibold opacity-90">Struktur Teks Narasi Fantasi</h3>
+                </div>
+                <!-- 30-Second Countdown Timer -->
+                <div class="flex items-center gap-2 bg-red-500/80 px-3 py-1 rounded-full font-game text-sm border border-red-300">
+                    <i class="fas fa-clock"></i>
+                    <span id="questionTimer">30s</span>
+                </div>
+            </div>
+
+            <!-- Question & Story Body -->
+            <div class="p-5 max-h-[75vh] overflow-y-auto">
+                <div id="questionProgress" class="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2">Soal #1 Dari 30</div>
+                <div id="questionText" class="text-base md:text-lg font-semibold text-slate-800 mb-4 leading-relaxed">
+                    Loading soal...
+                </div>
+
+                <!-- Answer Choices (Options A, B, C, D) -->
+                <div id="optionsContainer" class="space-y-2.5">
+                    <!-- Buttons generated dynamically -->
+                </div>
+
+                <!-- Short Explanation Box -->
+                <div id="explanationBox" class="hidden mt-4 p-3 bg-blue-50 border-2 border-blue-200 rounded-2xl text-xs md:text-sm text-blue-900">
+                    <p class="font-bold flex items-center gap-1.5 text-blue-700">
+                        <i class="fas fa-lightbulb"></i> Pembahasan Singkat:
+                    </p>
+                    <p id="explanationText" class="mt-1 leading-relaxed"></p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Action -->
+            <div id="modalFooter" class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
+                <button id="btnNextQuestion" disabled onclick="closeQuizModal()" class="px-6 py-2.5 bg-slate-300 text-slate-500 cursor-not-allowed font-game text-sm rounded-xl transition flex items-center gap-2">
+                    Lanjutkan Permainan <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Result Modal -->
+    <div id="resultModal" class="hidden fixed inset-0 bg-slate-900/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border-4 border-amber-400 max-w-md w-full p-6 text-center relative overflow-hidden">
+            <div class="text-5xl mb-2">🏆</div>
+            <h2 class="font-game text-2xl text-emerald-800">Laporan Hasil Kuis</h2>
+            <p class="text-xs text-slate-500 mb-4">Materi: Teks Narasi Fantasi (Kelas 7)</p>
+
+            <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-200 space-y-2 mb-4 text-left text-xs md:text-sm">
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Nama Siswa:</span>
+                    <span id="resStudentName" class="font-bold text-slate-800">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Kelas / No. Absen:</span>
+                    <span id="resClassAbsen" class="font-bold text-slate-800">-</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-slate-600">Soal Dijawab Benar:</span>
+                    <span id="resCorrectCount" class="font-bold text-emerald-600">0 / 30</span>
+                </div>
+                <div class="flex justify-between border-t border-amber-200 pt-2 text-base">
+                    <span class="font-bold text-amber-900">Total Nilai Akhir:</span>
+                    <span id="resFinalScore" class="font-game text-amber-600 text-xl">0</span>
+                </div>
+            </div>
+
+            <div id="badgeEvaluation" class="p-3 bg-emerald-100 text-emerald-900 rounded-xl text-xs font-bold mb-5">
+                Peringkat: Pahlawan Fantasi! 🌟
+            </div>
+
+            <button onclick="location.reload()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-game rounded-xl shadow-md transition">
+                <i class="fas fa-rotate-right mr-1"></i> Main Lagi / Ulangi
+            </button>
+        </div>
+    </div>
+
+    <footer class="text-center py-2 text-[11px] text-emerald-800 bg-emerald-200/50">
+        Bunga Menembak Zombie &copy; Game Edukasi Bahasa Indonesia Kelas 7 Teks Narasi Fantasi
+    </footer>
+
+    <script>
+        // Web Audio Synthesizer for Music & Sound FX
+        let audioCtx = null;
+        let isAudioMuted = false;
+        let musicInterval = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (isAudioMuted || !audioCtx) return;
+            try {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'shoot') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'hit') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(60, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'correct') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'wrong') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.setValueAtTime(150, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch (e) { console.log(e); }
+        }
+
+        function startBgm() {
+            if (musicInterval) clearInterval(musicInterval);
+            let noteIdx = 0;
+            const notes = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+            
+            musicInterval = setInterval(() => {
+                if (isAudioMuted || !audioCtx) return;
+                try {
+                    const now = audioCtx.currentTime;
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.type = 'sine';
+                    osc.frequency.value = notes[noteIdx % notes.length];
+                    gain.gain.setValueAtTime(0.03, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                    noteIdx = (noteIdx + 1) % notes.length;
+                } catch(e){}
+            }, 400);
+        }
+
+        function toggleAudio() {
+            isAudioMuted = !isAudioMuted;
+            const icon = document.getElementById('audioIcon');
+            const status = document.getElementById('audioStatusText');
+            if (isAudioMuted) {
+                icon.className = 'fas fa-volume-mute';
+                status.innerText = 'Musik: OFF';
+            } else {
+                icon.className = 'fas fa-volume-up';
+                status.innerText = 'Musik: ON';
+                initAudio();
+            }
+        }
+
+        // Question Database (Class 7 Indonesian Curriculum)
+        const quizQuestions = [
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "Bagian awal teks fantasi yang mengenalkan latar, tokoh, serta konflik awal disebut...",
+                options: ["Orientasi", "Komplikasi", "Resolusi", "Koda"],
+                answer: 0,
+                exp: "Orientasi berada di awal cerita untuk mengenalkan tokoh, latar suasana, tempat, dan waktu."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "Tahap dalam cerita fantasi saat timbul masalah hingga mencapai puncak klimaks adalah...",
+                options: ["Orientasi", "Komplikasi", "Resolusi", "Identifikasi"],
+                answer: 1,
+                exp: "Komplikasi berisi gambaran kemunculan masalah hingga Puncak masalah (klimaks)."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "Bagian teks fantasi yang berisi penyelesaian masalah dari konflik yang terjadi dinamakan...",
+                options: ["Komplikasi", "Orientasi", "Resolusi", "Abstraksi"],
+                answer: 2,
+                exp: "Resolusi merupakan bagian akhir yang mengungkapkan jalan keluar atau pemecahan masalah."
+            },
+            {
+                category: "Ciri Teks Narasi Fantasi",
+                q: "Berikut ini yang BUKAN merupakan ciri umum teks narasi fantasi adalah...",
+                options: ["Mengandung keajaiban atau keanehan", "Menggunakan latar lintas ruang dan waktu", "Sifatnya nyata dan berdasarkan kenyataan ilmiah", "Tokoh memiliki kesaktian/keunikan"],
+                answer: 2,
+                exp: "Cerita fantasi bersifat fiktif (rekaan) dan tidak nyata dalam kehidupan sehari-hari."
+            },
+            {
+                category: "Jenis Teks Narasi Fantasi",
+                q: "Cerita fantasi yang seluruh isinya tidak ada di dunia nyata disebut fantasi...",
+                options: ["Irisan", "Total", "Sezaman", "Lintas Waktu"],
+                answer: 1,
+                exp: "Fantasi Total mengungkapkan objek yang seluruhnya hasil imajinasi dan tidak ada di dunia nyata."
+            },
+            {
+                category: "Jenis Teks Narasi Fantasi",
+                q: "Cerita fantasi yang menggunakan dua periode waktu berbeda (misal: masa kini dan masa kerajaan purba) dinamakan...",
+                options: ["Fantasi Sezaman", "Fantasi Total", "Fantasi Lintas Waktu", "Fantasi Realis"],
+                answer: 2,
+                exp: "Fantasi Lintas Waktu menggunakan dua masa waktu yang berbeda dalam alur ceritanya."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Kata ganti orang pertama tunggal yang sering digunakan dalam cerita fantasi adalah...",
+                options: ["Saya / Aku", "Kamu / Engkau", "Mereka", "Dia / Beliau"],
+                answer: 0,
+                exp: "Kata 'Aku' atau 'Saya' adalah kata ganti sudut pandang orang pertama."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Kalimat yang menggunakan pencerapan pancaindra penglihatan di bawah ini adalah...",
+                options: ["Suara gemuruh itu terdengar sangat keras.", "Cahaya biru berkilauan keluar dari tongkat sihir itu.", "Bau harum bunga melati menyerbak di dalam gua.", "Permukaan batu itu terasa sangat kasar."],
+                answer: 1,
+                exp: "'Cahaya biru berkilauan' melibatkan indra penglihatan (mata)."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Konjungsi urutan waktu yang menandai keterkaitan antarevent cerita adalah...",
+                options: ["Tetapi", "Kemudian", "Sebab", "Karena"],
+                answer: 1,
+                exp: "'Kemudian', 'setelah itu', 'lalu' merupakan konjungsi urutan waktu."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Penulisan kalimat langsung dalam cerita fantasi ditandai dengan penggunaan tanda baca...",
+                options: ["Petik dua (\")", "Koma (,)", "Titik dua (:)", "Kurung ()"],
+                answer: 0,
+                exp: "Kalimat langsung yang diucapkan tokoh diapit oleh tanda petik dua (\")."
+            },
+            {
+                category: "Ciri Tokoh Fantasi",
+                q: "Tokoh dalam cerita fantasi sering memiliki keunikan khusus seperti...",
+                options: ["Menjadi Presiden", "Bisa terbang dan mengeluarkan api", "Bekerja di kantor", "Membeli baju di pasar"],
+                answer: 1,
+                exp: "Tokoh fantasi umumnya dikaruniai supranatural/keajaiban di luar nalar manusia."
+            },
+            {
+                category: "Jenis Cerita Fantasi",
+                q: "Jika cerita fantasi masih menggunakan nama tempat atau peristiwa yang ada di dunia nyata, dinamakan fantasi...",
+                options: ["Total", "Irisan", "Sezaman", "Masa Depan"],
+                answer: 1,
+                exp: "Fantasi Irisan masih menggunakan nama tempat, peristiwa, atau objek di dunia nyata."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Manakah yang merupakan kata sifat (adjektiva) untuk menggambarkan watak tokoh?",
+                options: ["Berlari", "Pemberani", "Di Kerajaan", "Memukul"],
+                answer: 1,
+                exp: "'Pemberani', 'sombong', 'baik hati' adalah kata sifat yang melukiskan karakter."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "\"Di sebuah desa yang tersembunyi di balik awan, hiduplah seorang anak bernama Doni.\" Kutipan ini merupakan bagian...",
+                options: ["Orientasi", "Komplikasi", "Resolusi", "Koda"],
+                answer: 0,
+                exp: "Kalimat tersebut mengenalkan tokoh (Doni) dan latar tempat, sehingga termasuk Orientasi."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "\"Tiba-tiba seekor naga hitam menyerang desa dan menculik putri raja.\" Kutipan ini termasuk bagian...",
+                options: ["Orientasi", "Komplikasi", "Resolusi", "Koda"],
+                answer: 1,
+                exp: "Awal munculnya masalah/ancaman menandai masuknya tahap Komplikasi."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "\"Dengan pedang cahayanya, Harry berhasil mengalahkan naga dan membebaskan putri.\" Kutipan ini merupakan bagian...",
+                options: ["Orientasi", "Komplikasi", "Resolusi", "Reorientasi"],
+                answer: 2,
+                exp: "Penyelesaian masalah dan kekalahan musuh adalah bagian dari Resolusi."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Manakah kalimat berikut yang menggunakan ungkapan keterkejut/kejutan?",
+                options: ["Pada suatu hari hiduplah seorang kakek.", "Tiba-tiba, bumi bergetar dan pintu dimensi terbuka!", "Dia berjalan pelan menuju sungai.", "Mereka hidup bahagia selamanya."],
+                answer: 1,
+                exp: "Kata 'Tiba-tiba' berfungsi memberi kesan kejutan dalam teks narasi."
+            },
+            {
+                category: "Unsur Intrinsik",
+                q: "Gagasan utama atau ide dasar yang menjadi landasan pengembangan cerita fantasi disebut...",
+                options: ["Latar", "Tema", "Amanat", "Penokohan"],
+                answer: 1,
+                exp: "Tema adalah gagasan pokok/inti cerita."
+            },
+            {
+                category: "Unsur Intrinsik",
+                q: "Pesan moral yang ingin disampaikan pengarang kepada pembaca melalui cerita fantasi adalah...",
+                options: ["Alur", "Amanat", "Latar", "Sudut Pandang"],
+                answer: 1,
+                exp: "Amanat adalah nilai moral atau ajaran kebaikan dalam cerita."
+            },
+            {
+                category: "Ciri Teks Narasi Fantasi",
+                q: "Latar dalam cerita fantasi bersifat...",
+                options: ["Terbatas pada ruang kelas saja", "Dapat menembus batas ruang dan waktu", "Harus sesuai kenyataan sejarah", "Kaku dan tidak bisa berubah"],
+                answer: 1,
+                exp: "Latar fantasi tidak terbatas pada satu masa/tempat dan melintasi dimensi."
+            },
+            {
+                category: "Jenis Cerita Fantasi",
+                q: "Cerita yang mengisahkan kejadian pada satu masa saja (misal: masa kini saja) disebut fantasi...",
+                options: ["Sezaman", "Lintas Waktu", "Masa Lalu", "Futuristik"],
+                answer: 0,
+                exp: "Fantasi sezaman menggunakan satu kurun waktu saja."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "\"Anika menemukan tiga kotak berwarna ungu, biru, dan kuning.\" Panca indra yang dominan adalah...",
+                options: ["Pendengaran", "Penglihatan", "Penciuman", "Perabaan"],
+                answer: 1,
+                exp: "Warna (ungu, biru, kuning) ditangkap oleh indra penglihatan."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Contoh kalimat tidak langsung yang benar adalah...",
+                options: ["Dia berkata, \"Aku akan pergi.\"", "Raja berpesan agar prajurit berhati-hati di hutan.", "\"Buka pintunya!\" teriak Budi.", "\"Siapa namamu?\" tanya putri."],
+                answer: 1,
+                exp: "Kalimat tidak langsung menyampaikan kembali ucapan tokoh tanpa menggunakan tanda petik dua."
+            },
+            {
+                category: "Analis Kebahasaan",
+                q: "Kata emosi kuat yang menggambarkan rasa takut dalam cerita fantasi adalah...",
+                options: ["Gemetar ketakutan", "Tersenyum tipis", "Berjalan santai", "Duduk manis"],
+                answer: 0,
+                exp: "'Gemetar ketakutan' mengekspresikan tingkatan emosi yang sangat tinggi."
+            },
+            {
+                category: "Struktur Teks Narasi Fantasi",
+                q: "Urutan struktur teks narasi fantasi yang benar adalah...",
+                options: ["Resolusi - Orientasi - Komplikasi", "Orientasi - Komplikasi - Resolusi", "Komplikasi - Orientasi - Resolusi", "Orientasi - Resolusi - Komplikasi"],
+                answer: 1,
+                exp: "Struktur padu teks fantasi adalah Orientasi -> Komplikasi -> Resolusi."
+            },
+            {
+                category: "Latar Cerita",
+                q: "Berikut ini yang merupakan latar tempat fiktif dalam cerita fantasi adalah...",
+                options: ["Kota Jakarta", "Planet Cristalia", "Sekolah SMP N 1", "Stasiun Kereta"],
+                answer: 1,
+                exp: "'Planet Cristalia' adalah contoh latar tempat imajinatif/fiktif."
+            },
+            {
+                category: "Kaidah Kebahasaan",
+                q: "Kata ganti 'Mereka' digunakan untuk menggantikan...",
+                options: ["Orang pertama tunggal", "Orang kedua tunggal", "Orang ketiga jamak", "Orang pertama jamak"],
+                answer: 2,
+                exp: "'Mereka' adalah kata ganti orang ketiga dalam jumlah lebih dari satu (jamak)."
+            },
+            {
+                category: "Ciri Bahasa",
+                q: "Bahasa yang digunakan dalam teks narasi fantasi umumnya...",
+                options: ["Kaku dan sangat formal", "Variatif, ekspresif, dan menggunakan ragam percakapan", "Bahas ilmiah baku", "Singkat seperti berita resmi"],
+                answer: 1,
+                exp: "Teks fantasi memakai dialog yang kaya ekspresi dan imajinatif."
+            },
+            {
+                category: "Ciri Teks Narasi Fantasi",
+                q: "Cerita fantasi dikatakan bersifat fiktif artinya...",
+                options: ["Berdasarkan kisah nyata penulis", "Hasil rekaan atau khayalan pengarang", "Diambil dari jurnal ilmiah", "Kisah nyata sejarah bangsa"],
+                answer: 1,
+                exp: "Fiktif berarti bersifat khayalan/imajinasi dan bukan reka nyata."
+            },
+            {
+                category: "Amanat Cerita",
+                q: "Nilai kebaikan yang biasa diambil dari cerita fantasi pertarungan adalah...",
+                options: ["Kejahatan selalu menang", "Kebaikan dan keberanian akan mengalahkan kejahatan", "Jangan membela teman", "Selalu lari dari masalah"],
+                answer: 1,
+                exp: "Pesan utama cerita fantasi umumnya mengagungkan kebenaran dan kebaikan."
+            }
+        ];
+
+        // Game Engine States
+        let studentData = { name: '', absen: '', class: '' };
+        let score = 0;
+        let houseHp = 3;
+        let sunEnergy = 150;
+        let zombiesSpawned = 0;
+        let zombiesRemaining = 30;
+        let selectedPlantTool = null; // 'peashooter' or 'wallnut'
+
+        // Grid & Entities Data
+        const ROWS = 5;
+        const COLS = 9;
+        let gridPlants = Array(ROWS).fill(null).map(() => Array(COLS).fill(null));
+        let activeZombies = [];
+        let activePeas = [];
+        
+        let gameLoopInterval = null;
+        let sunGenerationInterval = null;
+        let zombieSpawnInterval = null;
+        
+        // Quiz System States
+        let currentQuestionIdx = 0;
+        let activeZombieTarget = null;
+        let quizTimerVal = 30;
+        let quizTimerInterval = null;
+        let hasAnsweredCurrentQuestion = false;
+
+        function startGame(e) {
+            e.preventDefault();
+            initAudio();
+
+            studentData.name = document.getElementById('inputName').value.trim();
+            studentData.absen = document.getElementById('inputAbsen').value;
+            studentData.class = document.getElementById('inputClass').value;
+
+            document.getElementById('displayStudentName').innerText = studentData.name;
+            document.getElementById('displayClass').innerText = studentData.class;
+            document.getElementById('playerBadge').classList.remove('hidden');
+
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+
+            initLawnGrid();
+            startBgm();
+            runGameEngine();
+        }
+
+        // Initialize Lawn 5x9 Grid DOM
+        function initLawnGrid() {
+            const lawn = document.getElementById('lawnContainer');
+            lawn.innerHTML = '';
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'lawn-cell rounded-lg border border-green-600/30 flex items-center justify-center text-3xl select-none';
+                    cell.dataset.row = r;
+                    cell.dataset.col = c;
+                    cell.onclick = () => onCellClick(r, c);
+                    lawn.appendChild(cell);
+                }
+            }
+        }
+
+        function selectPlantTool(type) {
+            selectedPlantTool = type;
+            document.getElementById('btnSelectPeashooter').classList.toggle('ring-4', type === 'peashooter');
+            document.getElementById('btnSelectPeashooter').classList.toggle('ring-amber-400', type === 'peashooter');
+            document.getElementById('btnSelectWallnut').classList.toggle('ring-4', type === 'wallnut');
+            document.getElementById('btnSelectWallnut').classList.toggle('ring-amber-400', type === 'wallnut');
+        }
+
+        function onCellClick(row, col) {
+            if (!selectedPlantTool) return;
+
+            if (gridPlants[row][col] !== null) {
+                return; // Cell already occupied
+            }
+
+            const cost = selectedPlantTool === 'peashooter' ? 100 : 50;
+            if (sunEnergy < cost) {
+                playSound('wrong');
+                return;
+            }
+
+            // Deduct Sun and place plant
+            sunEnergy -= cost;
+            document.getElementById('sunCounter').innerText = sunEnergy;
+
+            gridPlants[row][col] = {
+                type: selectedPlantTool,
+                hp: selectedPlantTool === 'wallnut' ? 300 : 100,
+                maxHp: selectedPlantTool === 'wallnut' ? 300 : 100,
+                lastShot: Date.now()
+            };
+
+            renderPlantInCell(row, col);
+            selectedPlantTool = null;
+            selectPlantTool(null);
+        }
+
+        function renderPlantInCell(r, c) {
+            const lawn = document.getElementById('lawnContainer');
+            const idx = r * COLS + c;
+            const cell = lawn.children[idx];
+            const plant = gridPlants[r][c];
+
+            if (!plant) {
+                cell.innerHTML = '';
+                return;
+            }
+
+            if (plant.type === 'peashooter') {
+                cell.innerHTML = `<div class="animate-sway filter drop-shadow">🌻</div>`;
+            } else if (plant.type === 'wallnut') {
+                cell.innerHTML = `<div class="animate-sway filter drop-shadow">🥔</div>`;
+            }
+        }
+
+        function runGameEngine() {
+            // Main Ticker Interval (60 FPS feel)
+            gameLoopInterval = setInterval(() => {
+                updatePeas();
+                updateZombies();
+                checkPlantShooting();
+            }, 50);
+
+            // Sun Generation Interval (every 4s)
+            sunGenerationInterval = setInterval(() => {
+                sunEnergy += 25;
+                document.getElementById('sunCounter').innerText = sunEnergy;
+            }, 4000);
+
+            // Zombie Spawn Waves Interval (Slow Walkers)
+            zombieSpawnInterval = setInterval(() => {
+                if (zombiesSpawned < 30) {
+                    spawnZombie();
+                }
+            }, 5500);
+        }
+
+        function spawnZombie() {
+            const row = Math.floor(Math.random() * ROWS);
+            const overlay = document.getElementById('entityOverlay');
+
+            const zombieEl = document.createElement('div');
+            zombieEl.className = 'absolute text-4xl md:text-5xl animate-walk flex items-center justify-center transition-transform';
+            zombieEl.style.width = '10%';
+            zombieEl.style.height = '20%';
+            zombieEl.style.top = (row * 20) + '%';
+            zombieEl.style.left = '95%';
+            zombieEl.innerHTML = `
+                <div class="relative flex flex-col items-center">
+                    <div class="w-8 bg-slate-700/50 h-1.5 rounded-full mb-0.5 overflow-hidden border border-slate-900">
+                        <div class="z-hp-bar bg-green-500 h-full w-full"></div>
+                    </div>
+                    <span class="z-icon">🧟‍♂️</span>
+                </div>
+            `;
+
+            overlay.appendChild(zombieEl);
+
+            const zombieObj = {
+                id: Date.now() + Math.random(),
+                row: row,
+                xPercent: 95,
+                hp: 100,
+                maxHp: 100,
+                speed: 0.18, // Very slow movement
+                element: zombieEl,
+                isDying: false
+            };
+
+            activeZombies.push(zombieObj);
+            zombiesSpawned++;
+        }
+
+        function checkPlantShooting() {
+            const now = Date.now();
+            for (let r = 0; r < ROWS; r++) {
+                // Check if any zombie in this row
+                const zombieInRow = activeZombies.some(z => z.row === r && !z.isDying && z.xPercent < 95);
+                if (!zombieInRow) continue;
+
+                for (let c = 0; c < COLS; c++) {
+                    const plant = gridPlants[r][c];
+                    if (plant && plant.type === 'peashooter') {
+                        if (now - plant.lastShot >= 1600) { // Shoot pea every 1.6s
+                            spawnPea(r, c);
+                            plant.lastShot = now;
+                        }
+                    }
+                }
+            }
+        }
+
+        function spawnPea(row, col) {
+            const overlay = document.getElementById('entityOverlay');
+            const peaEl = document.createElement('div');
+            peaEl.className = 'absolute text-yellow-300 font-bold text-lg flex items-center justify-center';
+            peaEl.style.width = '3%';
+            peaEl.style.height = '20%';
+            peaEl.style.top = (row * 20) + '%';
+            peaEl.style.left = ((col + 1) * 10 + 2) + '%';
+            peaEl.innerHTML = '🟢';
+
+            overlay.appendChild(peaEl);
+            playSound('shoot');
+
+            activePeas.push({
+                row: row,
+                xPercent: (col + 1) * 10 + 2,
+                element: peaEl
+            });
+        }
+
+        function updatePeas() {
+            for (let i = activePeas.length - 1; i >= 0; i--) {
+                const pea = activePeas[i];
+                pea.xPercent += 1.8;
+                pea.element.style.left = pea.xPercent + '%';
+
+                // Check collision with zombies
+                let hitZombie = false;
+                for (let j = 0; j < activeZombies.length; j++) {
+                    const z = activeZombies[j];
+                    if (z.row === pea.row && !z.isDying && Math.abs(z.xPercent - pea.xPercent) < 3.5) {
+                        z.hp -= 35; // Damage per hit
+                        playSound('hit');
+
+                        // Update Zombie HP Bar
+                        const hpBar = z.element.querySelector('.z-hp-bar');
+                        if (hpBar) {
+                            const pct = Math.max(0, (z.hp / z.maxHp) * 100);
+                            hpBar.style.width = pct + '%';
+                        }
+
+                        // Zombie defeated!
+                        if (z.hp <= 0 && !z.isDying) {
+                            handleZombieDefeat(z);
+                        }
+
+                        hitZombie = true;
+                        break;
+                    }
+                }
+
+                // Remove pea if hit or offscreen
+                if (hitZombie || pea.xPercent > 100) {
+                    pea.element.remove();
+                    activePeas.splice(i, 1);
+                }
+            }
+        }
+
+        function updateZombies() {
+            for (let i = activeZombies.length - 1; i >= 0; i--) {
+                const z = activeZombies[i];
+                if (z.isDying) continue;
+
+                // Check if zombie meets plant obstacle
+                const currentCol = Math.floor((z.xPercent) / 10);
+                if (currentCol >= 0 && currentCol < COLS) {
+                    const plant = gridPlants[z.row][currentCol];
+                    if (plant) {
+                        // Zombie bites plant!
+                        plant.hp -= 1.5;
+                        if (plant.hp <= 0) {
+                            gridPlants[z.row][currentCol] = null;
+                            renderPlantInCell(z.row, currentCol);
+                        }
+                        continue; // Stop walking while eating
+                    }
+                }
+
+                // Walk forward slowly
+                z.xPercent -= z.speed;
+                z.element.style.left = z.xPercent + '%';
+
+                // Zombie reaches House / Breach!
+                if (z.xPercent <= 3) {
+                    z.element.remove();
+                    activeZombies.splice(i, 1);
+                    houseHp--;
+                    updateHouseHpDisplay();
+
+                    if (houseHp <= 0) {
+                        endGame(false);
+                    }
+                }
+            }
+        }
+
+        function handleZombieDefeat(zombie) {
+            zombie.isDying = true;
+            zombie.element.querySelector('.z-icon').innerText = '💥';
+
+            // 1 Second Delay for Defeat Animation before Quiz Trigger
+            setTimeout(() => {
+                zombie.element.remove();
+                const idx = activeZombies.findIndex(item => item.id === zombie.id);
+                if (idx !== -1) activeZombies.splice(idx, 1);
+
+                zombiesRemaining--;
+                document.getElementById('zombieRemainingDisplay').innerText = zombiesRemaining;
+
+                // Pause loops and Trigger Quiz Modal!
+                pauseGame();
+                triggerQuizModal(zombie);
+            }, 1000);
+        }
+
+        function updateHouseHpDisplay() {
+            const container = document.getElementById('houseHpHearts');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < houseHp) {
+                    container.innerHTML += `<i class="fas fa-heart text-red-500"></i>`;
+                } else {
+                    container.innerHTML += `<i class="far fa-heart text-red-300"></i>`;
+                }
+            }
+        }
+
+        function pauseGame() {
+            clearInterval(gameLoopInterval);
+            clearInterval(sunGenerationInterval);
+            clearInterval(zombieSpawnInterval);
+        }
+
+        function resumeGame() {
+            runGameEngine();
+        }
+
+        function triggerQuizModal(zombieTarget) {
+            if (currentQuestionIdx >= quizQuestions.length) {
+                endGame(true);
+                return;
+            }
+
+            hasAnsweredCurrentQuestion = false;
+            activeZombieTarget = zombieTarget;
+            const qData = quizQuestions[currentQuestionIdx];
+
+            document.getElementById('questionCategory').innerText = qData.category;
+            document.getElementById('questionProgress').innerText = `Soal #${currentQuestionIdx + 1} Dari 30`;
+            document.getElementById('questionText').innerText = qData.q;
+            document.getElementById('explanationBox').classList.add('hidden');
+
+            const nextBtn = document.getElementById('btnNextQuestion');
+            nextBtn.disabled = true;
+            nextBtn.className = "px-6 py-2.5 bg-slate-300 text-slate-500 cursor-not-allowed font-game text-sm rounded-xl transition flex items-center gap-2";
+
+            // Render Options (A, B, C, D)
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+
+            const optionLabels = ['A', 'B', 'C', 'D'];
+            qData.options.forEach((optText, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full p-3 bg-slate-100 hover:bg-emerald-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl font-semibold text-sm text-left flex items-start gap-3 transition shadow-sm hover:shadow";
+                btn.innerHTML = `
+                    <span class="bg-emerald-200 text-emerald-900 w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs shrink-0">${optionLabels[index]}</span>
+                    <span class="mt-0.5 text-slate-700">${optText}</span>
+                `;
+                btn.onclick = () => submitAnswer(index, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quizModal').classList.remove('hidden');
+
+            // 30 Seconds Timer Countdown
+            quizTimerVal = 30;
+            document.getElementById('questionTimer').innerText = `${quizTimerVal}s`;
+            clearInterval(quizTimerInterval);
+
+            quizTimerInterval = setInterval(() => {
+                quizTimerVal--;
+                document.getElementById('questionTimer').innerText = `${quizTimerVal}s`;
+                if (quizTimerVal <= 0) {
+                    clearInterval(quizTimerInterval);
+                    if (!hasAnsweredCurrentQuestion) {
+                        handleAnswerTimeout();
+                    }
+                }
+            }, 1000);
+        }
+
+        function submitAnswer(selectedIdx, buttonEl) {
+            if (hasAnsweredCurrentQuestion) return;
+            hasAnsweredCurrentQuestion = true;
+            clearInterval(quizTimerInterval);
+
+            const qData = quizQuestions[currentQuestionIdx];
+            const optionsContainer = document.getElementById('optionsContainer');
+            const allButtons = optionsContainer.children;
+
+            // Disable all option buttons
+            for (let btn of allButtons) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+
+            if (selectedIdx === qData.answer) {
+                // Correct Answer!
+                playSound('correct');
+                buttonEl.classList.remove('bg-slate-100', 'border-slate-200', 'opacity-70');
+                buttonEl.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900', 'ring-2', 'ring-emerald-400');
+                score += 4; // Add +4 points
+                document.getElementById('scoreDisplay').innerText = score;
+            } else {
+                // Wrong Answer!
+                playSound('wrong');
+                buttonEl.classList.remove('bg-slate-100', 'border-slate-200', 'opacity-70');
+                buttonEl.classList.add('bg-red-100', 'border-red-500', 'text-red-900');
+
+                // Highlight correct answer
+                const correctBtn = allButtons[qData.answer];
+                correctBtn.classList.remove('opacity-70');
+                correctBtn.classList.add('bg-emerald-100', 'border-emerald-500', 'text-emerald-900');
+            }
+
+            // Display Short Explanation
+            document.getElementById('explanationText').innerText = qData.exp;
+            document.getElementById('explanationBox').classList.remove('hidden');
+
+            // Enable Next Question Button
+            const nextBtn = document.getElementById('btnNextQuestion');
+            nextBtn.disabled = false;
+            nextBtn.className = "px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-game text-sm rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer";
+        }
+
+        function handleAnswerTimeout() {
+            hasAnsweredCurrentQuestion = true;
+            playSound('wrong');
+
+            const qData = quizQuestions[currentQuestionIdx];
+            const optionsContainer = document.getElementById('optionsContainer');
+            const allButtons = optionsContainer.children;
+
+            for (let btn of allButtons) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70');
+            }
+
+            // Highlight Correct Answer
+            const correctBtn = allButtons[qData.answer];
+            correctBtn.classList.remove('opacity-70');
+            correctBtn.classList.add('bg-amber-100', 'border-amber-500', 'text-amber-900');
+
+            document.getElementById('explanationText').innerText = "Waktu habis (30s)! " + qData.exp;
+            document.getElementById('explanationBox').classList.remove('hidden');
+
+            const nextBtn = document.getElementById('btnNextQuestion');
+            nextBtn.disabled = false;
+            nextBtn.className = "px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-game text-sm rounded-xl shadow-lg transition flex items-center gap-2 cursor-pointer";
+        }
+
+        function closeQuizModal() {
+            document.getElementById('quizModal').classList.add('hidden');
+            currentQuestionIdx++;
+
+            if (currentQuestionIdx >= 30 || zombiesRemaining <= 0) {
+                endGame(true);
+            } else {
+                resumeGame();
+            }
+        }
+
+        function endGame(isVictory) {
+            pauseGame();
+
+            document.getElementById('resStudentName').innerText = studentData.name;
+            document.getElementById('resClassAbsen').innerText = `${studentData.class} / Absen ${studentData.absen}`;
+            
+            const correctCount = Math.floor(score / 4);
+            document.getElementById('resCorrectCount').innerText = `${correctCount} Dari 30 Soal`;
+            document.getElementById('resFinalScore').innerText = score;
+
+            let badgeText = "";
+            if (score >= 90) {
+                badgeText = "🏆 Peringkat: MISTER FANTASI TINGKAT UTAMA! (Sangat Baik)";
+            } else if (score >= 70) {
+                badgeText = "🌟 Peringkat: PENJAGA GERBANG FANTASI! (Baik)";
+            } else {
+                badgeText = "📖 Peringkat: PEJUANG BELAJAR TEKS FANTASI! (Tingkatkan Latihan)";
+            }
+            document.getElementById('badgeEvaluation').innerText = badgeText;
+
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
